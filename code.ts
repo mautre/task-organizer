@@ -32,6 +32,19 @@ const STATUSES: Record<string, StatusConfig> = {
   }
 };
 
+const TEXT_STYLES = {
+  default: {
+    fontSize: 24,
+    fontFamily: "Inter",
+    fontStyle: "Regular"
+  }
+};
+
+const COLORS = {
+  grey: { r: 0.4, g: 0.4, b: 0.4 },
+  blue: { r: 0.1, g: 0.58, b: 0.75 }
+};
+
 figma.showUI(__html__, {
   width: 360,
   height: 420,
@@ -95,21 +108,17 @@ async function updateStatus(status: string, metadataFrame: FrameNode) {
   await loadFonts();
 
   const statusConfig = STATUSES[status];
-  
   let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status') as FrameNode;
   
-  // Если статус 'done' и фрейм существует - скрываем его
-  if (status === 'done' && statusFrame) {
-    statusFrame.visible = false;
-    if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
-    metadataFrame.parent.opacity = statusConfig.opacity;
-    }
-    return;
-  }
-  // Если статус не 'done' и фрейм существует - показываем его
+  // Обработка статуса 'done'
+  const isDone = status === 'done';
   if (statusFrame) {
-    statusFrame.visible = true;
-  }    
+    statusFrame.visible = !isDone;
+    if (isDone && metadataFrame.parent && 'opacity' in metadataFrame.parent) {
+      metadataFrame.parent.opacity = statusConfig.opacity;
+      return;
+    }
+  }
   
   if (!statusFrame) {
     // Создаем новый фрейм статуса
@@ -199,6 +208,47 @@ function updateMetadataPosition(metadataFrame: FrameNode) {
   }
 }
 
+function createTextNode(props: {
+  characters: string,
+  color?: RGB,
+  hyperlink?: { type: "URL", value: string },
+  decoration?: "UNDERLINE" | "NONE"
+}) {
+  const textNode = figma.createText();
+  textNode.fontSize = TEXT_STYLES.default.fontSize;
+  textNode.characters = props.characters;
+  if (props.color) {
+    textNode.fills = [{ type: 'SOLID', color: props.color }];
+  }
+  if (props.hyperlink) {
+    textNode.hyperlink = props.hyperlink;
+  }
+  if (props.decoration) {
+    textNode.textDecoration = props.decoration;
+  }
+  return textNode;
+}
+
+function createTaskLink(taskId: string) {
+  return `https://inside.notamedia.ru/company/personal/user/1/tasks/task/view/${taskId}/`;
+}
+
+function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addComma: boolean = true) {
+  if (addComma && tasksFrame.children.length > 1) {
+    const comma = createTextNode({ characters: ", " });
+    tasksFrame.appendChild(comma);
+  }
+  
+  const taskNode = createTextNode({
+    characters: taskId,
+    color: COLORS.blue,
+    hyperlink: { type: "URL", value: createTaskLink(taskId) },
+    decoration: "UNDERLINE"
+  });
+  
+  tasksFrame.appendChild(taskNode);
+}
+
 // Обновляем обработчик сообщений
 figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: string }) => {
   if (msg.type === 'update-status') {
@@ -219,6 +269,11 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     const frameName = selectedFrame.name;
     const matches = frameName.match(/\[(.*?)\]/);
     
+    if (!matches) {
+      figma.notify("[Задач] в названии не найдено");
+      return;
+    }
+
     if (matches && matches[1]) {
       const existingTasksFrame = validFrame.findChild(node => node.name === "Task-list");
       
@@ -234,31 +289,16 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
       
       await figma.loadFontAsync({ family: "Inter", style: "Regular" });
       
-      const labelNode = figma.createText();
-      labelNode.fontSize = 24;
-      labelNode.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 0.4 } }];
-      labelNode.characters = "Связанные задачи: ";
+      const labelNode = createTextNode({ 
+        characters: "Связанные задачи: ",
+        color: COLORS.grey 
+      });
       tasksFrame.appendChild(labelNode);
       
       for (let i = 0; i < taskIds.length; i++) {
         const taskId = taskIds[i];
         if (/^\d+$/.test(taskId)) {
-          const taskUrl = `https://inside.notamedia.ru/company/personal/user/1/tasks/task/view/${taskId}/`;
-          
-          const textNode = figma.createText();
-          textNode.fontSize = 24;
-          textNode.fills = [{ type: 'SOLID', color: { r: 0.1, g: 0.58, b: 0.75 } }];
-          textNode.characters = taskId;
-          textNode.hyperlink = { type: "URL", value: taskUrl };
-          textNode.textDecoration = "UNDERLINE";
-          
-          tasksFrame.appendChild(textNode);
-          
-          if (i < taskIds.filter(id => /^\d+$/.test(id)).length - 1) {
-            const comma = figma.createText();
-            comma.characters = ", ";
-            tasksFrame.appendChild(comma);
-          }
+          addTaskToFrame(tasksFrame, taskId);
         }
       }
       
@@ -290,30 +330,14 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
       
     const children = tasksFrame.children;
     if (children.length === 0) {
-      const labelNode = figma.createText();
-      labelNode.fontSize = 24;
-      labelNode.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 0.4 } }];
-      labelNode.characters = "Связанные задачи: ";
+      const labelNode = createTextNode({ 
+        characters: "Связанные задачи: ",
+        color: COLORS.grey 
+      });
       tasksFrame.appendChild(labelNode);
     }
     
-    const taskUrl = `https://inside.notamedia.ru/company/personal/user/1/tasks/task/view/${msg.taskId}/`;
-    
-    if (children.length > 1) {
-      const comma = figma.createText();
-      comma.fontSize = 24;
-      comma.characters = ", ";
-      tasksFrame.appendChild(comma);
-    }
-    
-    const textNode = figma.createText();
-    textNode.fontSize = 24;
-    textNode.fills = [{ type: 'SOLID', color: { r: 0.1, g: 0.58, b: 0.75 } }];
-    textNode.characters = msg.taskId;
-    textNode.hyperlink = { type: "URL", value: taskUrl };
-    textNode.textDecoration = "UNDERLINE";
-    
-    tasksFrame.appendChild(textNode);
+    addTaskToFrame(tasksFrame, msg.taskId);
     
     tasksFrame.resize(
       tasksFrame.width,
