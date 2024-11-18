@@ -1,0 +1,91 @@
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .status-button {
+    width: 200px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: Roboto, sans-serif;
+    font-size: 14px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .status-button:focus {
+    outline: 2px solid black;
+    outline-offset: 2px;
+  }
+
+  .status-button:hover {
+    opacity: 0.8;
+  }
+
+  .status-button.in-progress { background-color: #FF8F00; }
+  .status-button.check-it { background-color: #0000FF; }
+  .status-button.not-relevant { background-color: #9E9E9E; }
+  .status-button.done { background-color: #4CAF50; }
+
+  
+</style>
+
+<button class="status-button in-progress" data-status="in-progress">В процессе</button>
+<button class="status-button check-it" data-status="check-it">На проверку</button>
+<button class="status-button not-relevant" data-status="not-relevant">Не актуально</button>
+<button class="status-button done" data-status="done">Готово</button>
+
+
+
+<script>
+  const buttons = Array.from(document.querySelectorAll('.status-button'));
+  let currentFocusIndex = -1;
+
+  // Устанавливаем фокус на первую кнопку при загрузке
+  window.addEventListener('load', () => {
+    currentFocusIndex = 0;
+    buttons[currentFocusIndex].focus();
+  });
+
+  const updateStatus = (status) => {
+    parent.postMessage({ pluginMessage: { type: 'update-status', status } }, '*');
+  };
+  
+  // Обработчик клика по кнопкам
+  document.querySelectorAll('.status-button').forEach(button => {
+    button.onclick = () => {
+      updateStatus(button.dataset.status);
+      select.value = button.dataset.status;
+    };
+  });
+
+  // Обработчик клавиатуры
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      currentFocusIndex = (currentFocusIndex + 1) % buttons.length;
+      buttons[currentFocusIndex].focus();
+    }
+    // Добавляем обработку стрелок
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      currentFocusIndex = (currentFocusIndex + 1) % buttons.length;
+      buttons[currentFocusIndex].focus();
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      currentFocusIndex = (currentFocusIndex - 1 + buttons.length) % buttons.length;
+      buttons[currentFocusIndex].focus();
+    }
+    if (e.key === 'Enter' && document.activeElement instanceof HTMLButtonElement) {
+      updateStatus(document.activeElement.dataset.status);
+      select.value = document.activeElement.dataset.status;
+    }
+  });
+</script>
