@@ -14,7 +14,7 @@ const STATUSES: Record<string, StatusConfig> = {
   },
   'check-it': {
     value: 'check-it',
-    color: { r: 0, g: 0, b: 1 },
+    color: { r: 0.11, g: 0.45, b: 0.97 },
     opacity: 1,
     label: 'На проверку'
   },
