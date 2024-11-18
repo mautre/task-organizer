@@ -1,47 +1,176 @@
 <style>
+  :root {
+    --primary-color: #4CAF50;
+    --in-progress-color: #FF8F00;
+    --check-it-color: #1e71f7;
+    --not-relevant-color: #9E9E9E;
+    --font-family: 'Roboto', sans-serif;
+    --spacing-s: 8px;
+    --spacing-m: 16px;
+    --button-width: 200px;
+    --border-radius: 4px;
+    --font-size: 14px;
+    --transition: 0.2s;
+    --ghost-button-color: #333333;
+    --figma-color-bg: #ffffff;
+    --figma-color-text: rgba(0, 0, 0, 0.9);
+    --figma-color-border: rgba(0, 0, 0, 0.1);
+    --button-secondary-bg: rgba(0, 0, 0, 0.05);
+    --button-secondary-pressed: rgba(0, 0, 0, 0.1);
+    --button-secondary-hover: rgba(0, 0, 0, 0.08);
+  }
+
   body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 16px;
+    gap: var(--spacing-s);
+    padding: 8px var(--spacing-m); /* Уменьшаем отступ сверху с var(--spacing-m) до 8px */
+    /* padding-bottom: 80px; */
+    font-family: var(--font-family);
+    background-color: white;
+    color: var(--figma-color-text);
   }
 
-  .status-button {
-    width: 200px;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-family: Roboto, sans-serif;
-    font-size: 14px;
-    border: none;
-    color: white;
+h4 {
+  margin: 4px 0; /* Уменьшаем отступы вокруг всех h4 */
+}
+
+  /* Общие стили для всех кнопок */
+  button {
+    width: var(--button-width);
+    padding: var(--spacing-s) var(--spacing-m);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: 1px solid var(--figma-color-border);
+    color: var(--figma-color-text);
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all var(--transition);
+    background-color: var(--button-secondary-bg);
   }
 
-  .status-button:focus {
+  button:focus {
     outline: 2px solid black;
     outline-offset: 2px;
   }
 
-  .status-button:hover {
-    opacity: 0.8;
+  button:hover {
+    background-color: var(--button-secondary-hover);
   }
 
-  .status-button.in-progress { background-color: #FF8F00; }
-  .status-button.check-it { background-color: #0000FF; }
-  .status-button.not-relevant { background-color: #9E9E9E; }
-  .status-button.done { background-color: #4CAF50; }
+  button:active {
+    background-color: var(--button-secondary-pressed);
+  }
 
-  
+  /* Специфичные цвета для кнопок статуса */
+  .status-button.in-progress { background-color: var(--in-progress-color); }
+  .status-button.check-it { background-color: var(--check-it-color); }
+  .status-button.not-relevant { background-color: var(--not-relevant-color); }
+  .status-button.done { background-color: var(--primary-color); }
+
+  /* Контейнер для инпута и кнопки */
+  .task-input-container {
+    display: flex;
+    gap: var(--spacing-s);
+    margin-top: var(--spacing-s);
+    width: var(--button-width);
+  }
+
+  /* Стили для input */
+  input[type="number"] {
+    flex: 1;
+    padding: var(--spacing-s);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: 1px solid var(--not-relevant-color);
+  }
+
+  input[type="number"]:focus {
+    outline: 2px solid black;
+    outline-offset: -1px;
+    border-color: transparent;
+  }
+
+  /* Добавляем разделитель */
+  .separator {
+    width: var(--button-width);
+    height: 1px;
+    background-color: var(--not-relevant-color);
+    margin: var(--spacing-m) 0;
+    opacity: 0.5;
+  }
+
+  /* Группируем элементы для работы с задачами */
+  .task-management {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-s);
+    width: var(--button-width);
+    padding-top: var(--spacing-s);
+  }
+
+  /* Адаптивность */
+  @media (max-width: 600px) {
+    button,
+    .task-input-container,
+    .separator,
+    .task-management {
+      width: 100%;
+    }
+  }
+
+  /* Стиль для кнопки "Добавить" */
+  #addTask {
+    background-color: var(--figma-color-text);
+    color: var(--figma-color-bg);
+  }
+  #addTask:hover {
+    background-color: var(--figma-color-text);
+    color: var(--figma-color-bg);
+  }
+
+  /* Обновляем стиль для ghost-кнопки */
+  .ghost-button {
+    background-color: transparent;
+    border: 1px solid var(--figma-color-text);
+    color: var(--figma-color-text);
+  }
+
+  .ghost-button:hover {
+    background-color: var(--figma-color-bg-hover);
+    color: var(--figma-color-bg);
+    opacity: 1;
+  }
+
+  .ghost-button:focus {
+    outline: 2px solid var(--figma-color-border-brand-strong);
+    outline-offset: 2px;
+  }
 </style>
-
+<h4>Статусы</h4>
+<!-- Кнопки статусов -->
 <button class="status-button in-progress" data-status="in-progress">В процессе</button>
 <button class="status-button check-it" data-status="check-it">На проверку</button>
 <button class="status-button not-relevant" data-status="not-relevant">Не актуально</button>
 <button class="status-button done" data-status="done">Готово</button>
 
-
+<!-- Разделитель -->
+<div class="separator"></div>
+<h4>Связанные задачи</h4>
+<!-- Секция работы с задачами -->
+<div class="task-management">
+  <div class="task-input-container">
+    <input 
+      type="number" 
+      id="taskInput" 
+      placeholder="Номер задачи"
+    >
+    <button id="addTask">Добавить</button>
+  </div>
+  <button id="rewrite" class="ghost-button">[...] -> ссылки</button>
+</div>
 
 <script>
   const buttons = Array.from(document.querySelectorAll('.status-button'));
@@ -86,4 +215,24 @@
       updateStatus(document.activeElement.dataset.status);
     }
   });
+
+  // Обработчики для Task-linker
+  document.getElementById('rewrite').onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'rewrite-tasks' } }, '*')
+  }
+
+  document.getElementById('addTask').onclick = () => {
+    const taskInput = document.getElementById('taskInput');
+    const taskId = taskInput.value;
+    
+    if (taskId && /^\d+$/.test(taskId)) {
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'add-task',
+          taskId: taskId 
+        } 
+      }, '*');
+      taskInput.value = ''; // Очищаем поле после отправки
+    }
+  }
 </script>
