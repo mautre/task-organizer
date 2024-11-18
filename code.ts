@@ -56,11 +56,11 @@ async function updateStatus(status: string) {
   const selectedFrame = selection[0] as FrameNode;
   console.log(selectedFrame);
 
-// Проверяем родительский элемент
-if (selectedFrame.parent && selectedFrame.parent.type === 'FRAME') {
-  figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне');
-  return;
-}
+  // Проверяем родительский элемент
+  if (selectedFrame.parent && (selectedFrame.parent.type === 'FRAME' || selectedFrame.parent.type === 'GROUP')) {
+    figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне');
+    return;
+  }
 
   const statusConfig = STATUSES[status];
   
@@ -101,9 +101,9 @@ if (selectedFrame.parent && selectedFrame.parent.type === 'FRAME') {
     statusIndicator.name = 'Status Indicator'
     statusIndicator.resize(48, 48);
     
-    // Создаем текст
+     // Создаем текст
     const statusLabel = figma.createText();
-    statusLabel.name = statusConfig.value;
+    statusLabel.name = statusConfig.value; // Изменить на фиксированное имя
     statusLabel.fontSize = 24;
 
     // Отключаем Clip content у выбранного фрейма
@@ -119,9 +119,9 @@ if (selectedFrame.parent && selectedFrame.parent.type === 'FRAME') {
     }
   }
 
-  // Обновляем свойства
-  const statusIndicator = statusFrame.findOne(node => node.name === 'Status Indicator') as EllipseNode;
-  const statusLabel = statusFrame.findOne(node => node.name === 'Status Name') as TextNode;
+   // Обновляем свойства
+   const statusIndicator = statusFrame.findOne(node => node.name === 'Status Indicator') as EllipseNode;
+   const statusLabel = statusFrame.findOne(node => node.name === statusConfig.value) as TextNode; // Изменено на statusConfig.value
   
   statusIndicator.fills = [{ type: 'SOLID', color: statusConfig.color }];
   statusLabel.characters = statusConfig.label;

@@ -61,7 +61,6 @@
   document.querySelectorAll('.status-button').forEach(button => {
     button.onclick = () => {
       updateStatus(button.dataset.status);
-      select.value = button.dataset.status;
     };
   });
 
@@ -85,7 +84,6 @@
     }
     if (e.key === 'Enter' && document.activeElement instanceof HTMLButtonElement) {
       updateStatus(document.activeElement.dataset.status);
-      select.value = document.activeElement.dataset.status;
     }
   });
 </script>

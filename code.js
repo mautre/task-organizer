@@ -56,7 +56,7 @@ function updateStatus(status) {
         const selectedFrame = selection[0];
         console.log(selectedFrame);
         // Проверяем родительский элемент
-        if (selectedFrame.parent && selectedFrame.parent.type === 'FRAME') {
+        if (selectedFrame.parent && (selectedFrame.parent.type === 'FRAME' || selectedFrame.parent.type === 'GROUP')) {
             figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне');
             return;
         }
@@ -94,7 +94,7 @@ function updateStatus(status) {
             statusIndicator.resize(48, 48);
             // Создаем текст
             const statusLabel = figma.createText();
-            statusLabel.name = 'Status Name';
+            statusLabel.name = statusConfig.value; // Изменить на фиксированное имя
             statusLabel.fontSize = 24;
             // Отключаем Clip content у выбранного фрейма
             selectedFrame.clipsContent = false;
@@ -108,7 +108,7 @@ function updateStatus(status) {
         }
         // Обновляем свойства
         const statusIndicator = statusFrame.findOne(node => node.name === 'Status Indicator');
-        const statusLabel = statusFrame.findOne(node => node.name === 'Status Name');
+        const statusLabel = statusFrame.findOne(node => node.name === statusConfig.value); // Изменено на statusConfig.value
         statusIndicator.fills = [{ type: 'SOLID', color: statusConfig.color }];
         statusLabel.characters = statusConfig.label;
         selectedFrame.opacity = statusConfig.opacity;
