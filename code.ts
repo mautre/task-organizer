@@ -98,7 +98,14 @@ async function updateStatus(status: string, metadataFrame: FrameNode) {
   
   let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status') as FrameNode;
   
-  
+  // Если статус 'done' и фрейм существует - скрываем его
+  if (status === 'done' && statusFrame) {
+    statusFrame.visible = false;
+    if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
+    metadataFrame.parent.opacity = statusConfig.opacity;
+    }
+    return;
+  }
   // Если статус не 'done' и фрейм существует - показываем его
   if (statusFrame) {
     statusFrame.visible = true;
@@ -135,7 +142,7 @@ async function updateStatus(status: string, metadataFrame: FrameNode) {
       statusFrame.visible = false;
       if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
       metadataFrame.parent.opacity = statusConfig.opacity;
-    }
+      }
       return;
     }
   }

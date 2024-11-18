@@ -92,6 +92,14 @@ function updateStatus(status, metadataFrame) {
         yield loadFonts();
         const statusConfig = STATUSES[status];
         let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status');
+        // Если статус 'done' и фрейм существует - скрываем его
+        if (status === 'done' && statusFrame) {
+            statusFrame.visible = false;
+            if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
+                metadataFrame.parent.opacity = statusConfig.opacity;
+            }
+            return;
+        }
         // Если статус не 'done' и фрейм существует - показываем его
         if (statusFrame) {
             statusFrame.visible = true;
