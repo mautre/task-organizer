@@ -104,11 +104,55 @@ function updateMetadataFrame() {
   return metadataFrame;
 }
 
+
 async function updateStatus(status: string, metadataFrame: FrameNode) {
   await loadFonts();
-
+  await figma.loadAllPagesAsync(); // Добавляем загрузку всех страниц
   const statusConfig = STATUSES[status];
-  let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status') as FrameNode;
+  
+  // Проверяем существование компонента og-Status
+  let statusComponent = figma.root.findOne(node => 
+    node.type === "COMPONENT" && node.name === "og-Status"
+  ) as ComponentNode;
+
+  // Создаем компонент, если он не существует
+  if (!statusComponent) {
+    statusComponent = figma.createComponent();
+    statusComponent.name = 'og-Status';
+    statusComponent.cornerRadius = 24;
+    statusComponent.bottomLeftRadius = 0;
+    statusComponent.verticalPadding = 12;
+    statusComponent.horizontalPadding = 20;
+    statusComponent.layoutMode = 'HORIZONTAL';
+    statusComponent.itemSpacing = 16;
+    statusComponent.counterAxisAlignItems = 'CENTER';
+    statusComponent.layoutSizingVertical = 'HUG';
+    statusComponent.layoutSizingHorizontal = 'HUG';
+    statusComponent.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+    
+    // Создаем круг
+    const statusIndicator = figma.createEllipse();
+    statusIndicator.name = 'Status Indicator';
+    statusIndicator.resize(48, 48);
+    
+    // Создаем текст
+    const statusLabel = figma.createText();
+    statusLabel.name = 'Status Label';
+    statusLabel.fontSize = 24;
+
+    statusComponent.appendChild(statusIndicator);
+    statusComponent.appendChild(statusLabel);
+    
+    // Помещаем компонент на страницу компонентов или создаем её
+    let componentsPage = figma.root.findOne(page => page.name === "Status comp.") as PageNode;
+    if (!componentsPage) {
+      componentsPage = figma.createPage();
+      componentsPage.name = "Status comp.";
+    }
+    componentsPage.appendChild(statusComponent);
+  }
+
+  let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status') as InstanceNode;
   
   // Обработка статуса 'done'
   const isDone = status === 'done';
@@ -121,52 +165,15 @@ async function updateStatus(status: string, metadataFrame: FrameNode) {
   }
   
   if (!statusFrame) {
-    // Создаем новый фрейм статуса
-    statusFrame = figma.createFrame();
+    // Создаем экземпляр компонента
+    statusFrame = statusComponent.createInstance();
     statusFrame.name = 'og-Status';
-    statusFrame.cornerRadius = 12;
-    statusFrame.verticalPadding = 12;
-    statusFrame.horizontalPadding = 20;
-    statusFrame.layoutMode = 'HORIZONTAL';
-    statusFrame.itemSpacing = 16;
-    statusFrame.counterAxisAlignItems = 'CENTER';
-    statusFrame.layoutSizingVertical = 'HUG';
-    statusFrame.layoutSizingHorizontal = 'HUG';
-    
-    // Создаем круг
-    const statusIndicator = figma.createEllipse();
-    statusIndicator.name = 'Status Indicator'
-    statusIndicator.resize(48, 48);
-    
-     // Создаем текст
-    const statusLabel = figma.createText();
-    statusLabel.name = statusConfig.value; // Изменить на фиксированное имя
-    statusLabel.fontSize = 24;
-
-    statusFrame.appendChild(statusIndicator);
-    statusFrame.appendChild(statusLabel);
-    metadataFrame.insertChild(0, statusFrame); 
-    // Если статус 'done' и фрейм существует - скрываем его
-    if (status === 'done' && statusFrame) {
-      statusFrame.visible = false;
-      if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
-      metadataFrame.parent.opacity = statusConfig.opacity;
-      }
-      return;
-    }
+    metadataFrame.insertChild(0, statusFrame);
   }
 
-  // Обновляем свойства
+  // Обновляем свойства экземпляра
   const statusIndicator = statusFrame.findOne(node => node.name === 'Status Indicator') as EllipseNode;
-  let statusLabel = statusFrame.findOne(node => node.name === statusConfig.value) as TextNode;
-  
-  // Если не нашли текстовый слой по новому статусу, ищем любой текстовый слой и обновляем его имя
-  if (!statusLabel) {
-    statusLabel = statusFrame.findChild(node => node.type === 'TEXT') as TextNode;
-    if (statusLabel) {
-      statusLabel.name = statusConfig.value;
-    }
-  }
+  const statusLabel = statusFrame.findOne(node => node.name === 'Status Label') as TextNode;
 
   if (!statusIndicator || !statusLabel) {
     figma.notify('Ошибка: не удалось найти элементы статуса');
