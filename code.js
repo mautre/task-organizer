@@ -130,10 +130,10 @@ function updateStatus(status, metadataFrame) {
             statusComponent.appendChild(statusIndicator);
             statusComponent.appendChild(statusLabel);
             // Помещаем компонент на страницу компонентов или создаем её
-            let componentsPage = figma.root.findOne(page => page.name === "Status comp.");
+            let componentsPage = figma.root.findOne(page => page.name === "Components");
             if (!componentsPage) {
                 componentsPage = figma.createPage();
-                componentsPage.name = "Status comp.";
+                componentsPage.name = "Components";
             }
             componentsPage.appendChild(statusComponent);
         }

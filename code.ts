@@ -144,10 +144,10 @@ async function updateStatus(status: string, metadataFrame: FrameNode) {
     statusComponent.appendChild(statusLabel);
     
     // Помещаем компонент на страницу компонентов или создаем её
-    let componentsPage = figma.root.findOne(page => page.name === "Status comp.") as PageNode;
+    let componentsPage = figma.root.findOne(page => page.name === "Components") as PageNode;
     if (!componentsPage) {
       componentsPage = figma.createPage();
-      componentsPage.name = "Status comp.";
+      componentsPage.name = "Components";
     }
     componentsPage.appendChild(statusComponent);
   }
