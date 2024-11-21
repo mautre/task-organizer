@@ -171,7 +171,7 @@ function createTasksFrame(metadataFrame) {
 }
 function validateMetadataFrame(metadataFrame) {
     if (!metadataFrame || metadataFrame.type !== "FRAME") {
-        figma.notify("Frame-metadata не найден или некорректен");
+        // figma.notify("Frame-metadata не найден или некорректен");
         return null;
     }
     return metadataFrame;

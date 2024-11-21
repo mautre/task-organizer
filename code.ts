@@ -192,7 +192,7 @@ function createTasksFrame(metadataFrame: FrameNode): FrameNode {
 
 function validateMetadataFrame(metadataFrame: FrameNode): FrameNode | null {
   if (!metadataFrame || metadataFrame.type !== "FRAME") {
-    figma.notify("Frame-metadata не найден или некорректен");
+    // figma.notify("Frame-metadata не найден или некорректен");
     return null;
   }
   return metadataFrame;
