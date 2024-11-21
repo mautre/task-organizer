@@ -59,22 +59,19 @@ function loadFonts() {
 function updateMetadataFrame() {
     const selection = figma.currentPage.selection;
     if (!selection.length || selection.length > 1) {
-        figma.notify('Выберите один фрейм', { error: true });
+        figma.notify('Выберите один фрейм', { timeout: 2000, error: true });
         return;
     }
-    // Добавляем проверку на SECTION
     if (selection[0].type === 'SECTION') {
-        figma.notify('Нельзя применить к секции', { error: true });
+        figma.notify('Нельзя применить к секции', { timeout: 2000, error: true });
         return;
     }
     const selectedFrame = selection[0];
-    // console.log(selectedFrame);
-    // Проверяем родительский элемент
     if (selectedFrame.parent && (selectedFrame.parent.type === 'FRAME' || selectedFrame.parent.type === 'GROUP')) {
         figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне', { error: true });
         return;
     }
-    // Находим фрейм metadata внутри выбранного фрейма  
+    // Проверяем существующий Frame-metadata
     let metadataFrame = selectedFrame.findOne(node => node.name === 'Frame-metadata');
     if (!metadataFrame) {
         metadataFrame = figma.createFrame();
@@ -85,59 +82,31 @@ function updateMetadataFrame() {
         metadataFrame.layoutSizingHorizontal = 'HUG';
         metadataFrame.fills = [];
         metadataFrame.itemSpacing = 16;
-        selectedFrame.insertChild(0, metadataFrame);
-        // Отключаем Clip content у выбранного фрейма
-        selectedFrame.clipsContent = false;
-        // Проверяем autolayout и устанавливаем ignore для фрейма статуса
-        if (selectedFrame.layoutMode !== 'NONE') {
-            metadataFrame.layoutPositioning = 'ABSOLUTE';
-        }
-        // Позиционируем фрейм статуса
-        metadataFrame.x = 0;
-        metadataFrame.y = -metadataFrame.height - 16;
+        // Добавляем как последний элемент
+        selectedFrame.appendChild(metadataFrame);
     }
+    else {
+        // Если Frame-metadata уже существует, но не является последним элементом
+        const lastIndex = selectedFrame.children.length - 1;
+        const currentIndex = selectedFrame.children.indexOf(metadataFrame);
+        if (currentIndex !== lastIndex) {
+            selectedFrame.appendChild(metadataFrame);
+        }
+    }
+    selectedFrame.clipsContent = false;
+    if (selectedFrame.layoutMode !== 'NONE') {
+        metadataFrame.layoutPositioning = 'ABSOLUTE';
+    }
+    metadataFrame.x = 0;
+    metadataFrame.y = -metadataFrame.height - 16;
     return metadataFrame;
 }
 function updateStatus(status, metadataFrame) {
     return __awaiter(this, void 0, void 0, function* () {
         yield loadFonts();
-        yield figma.loadAllPagesAsync(); // Добавляем загрузку всех страниц
+        // await figma.loadAllPagesAsync();
         const statusConfig = STATUSES[status];
-        // Проверяем существование компонента og-Status
-        let statusComponent = figma.root.findOne(node => node.type === "COMPONENT" && node.name === "og-Status");
-        // Создаем компонент, если он не существует
-        if (!statusComponent) {
-            statusComponent = figma.createComponent();
-            statusComponent.name = 'og-Status';
-            statusComponent.cornerRadius = 24;
-            statusComponent.bottomLeftRadius = 0;
-            statusComponent.verticalPadding = 12;
-            statusComponent.horizontalPadding = 20;
-            statusComponent.layoutMode = 'HORIZONTAL';
-            statusComponent.itemSpacing = 16;
-            statusComponent.counterAxisAlignItems = 'CENTER';
-            statusComponent.layoutSizingVertical = 'HUG';
-            statusComponent.layoutSizingHorizontal = 'HUG';
-            statusComponent.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-            // Создаем круг
-            const statusIndicator = figma.createEllipse();
-            statusIndicator.name = 'Status Indicator';
-            statusIndicator.resize(48, 48);
-            // Создаем текст
-            const statusLabel = figma.createText();
-            statusLabel.name = 'Status Label';
-            statusLabel.fontSize = 24;
-            statusComponent.appendChild(statusIndicator);
-            statusComponent.appendChild(statusLabel);
-            // Помещаем компонент на страницу компонентов или создаем её
-            let componentsPage = figma.root.findOne(page => page.name === "Components");
-            if (!componentsPage) {
-                componentsPage = figma.createPage();
-                componentsPage.name = "Components";
-            }
-            componentsPage.appendChild(statusComponent);
-        }
-        let statusFrame = metadataFrame.findOne(node => node.name === 'og-Status');
+        let statusFrame = metadataFrame.findOne(node => node.name === 'Status');
         // Обработка статуса 'done'
         const isDone = status === 'done';
         if (statusFrame) {
@@ -148,12 +117,32 @@ function updateStatus(status, metadataFrame) {
             }
         }
         if (!statusFrame) {
-            // Создаем экземпляр компонента
-            statusFrame = statusComponent.createInstance();
-            statusFrame.name = 'og-Status';
+            // Создаем обычный фрейм вместо компонента
+            statusFrame = figma.createFrame();
+            statusFrame.name = 'Status';
+            statusFrame.cornerRadius = 24;
+            statusFrame.bottomLeftRadius = 0;
+            statusFrame.verticalPadding = 12;
+            statusFrame.horizontalPadding = 20;
+            statusFrame.layoutMode = 'HORIZONTAL';
+            statusFrame.itemSpacing = 16;
+            statusFrame.counterAxisAlignItems = 'CENTER';
+            statusFrame.layoutSizingVertical = 'HUG';
+            statusFrame.layoutSizingHorizontal = 'HUG';
+            statusFrame.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+            // Создаем круг
+            const statusIndicator = figma.createEllipse();
+            statusIndicator.name = 'Status Indicator';
+            statusIndicator.resize(48, 48);
+            // Создаем текст
+            const statusLabel = figma.createText();
+            statusLabel.name = 'Status Label';
+            statusLabel.fontSize = 24;
+            statusFrame.appendChild(statusIndicator);
+            statusFrame.appendChild(statusLabel);
             metadataFrame.insertChild(0, statusFrame);
         }
-        // Обновляем свойства экземпляра
+        // Обновляем свойства фрейма
         const statusIndicator = statusFrame.findOne(node => node.name === 'Status Indicator');
         const statusLabel = statusFrame.findOne(node => node.name === 'Status Label');
         if (!statusIndicator || !statusLabel) {
@@ -176,6 +165,7 @@ function createTasksFrame(metadataFrame) {
     tasksFrame.layoutSizingHorizontal = 'HUG';
     tasksFrame.fills = [];
     tasksFrame.itemSpacing = 4;
+    tasksFrame.paddingBottom = 8;
     metadataFrame.appendChild(tasksFrame);
     return tasksFrame;
 }
@@ -212,7 +202,7 @@ function createTaskLink(taskId) {
 }
 function addTaskToFrame(tasksFrame, taskId, addComma = true) {
     if (addComma && tasksFrame.children.length > 1) {
-        const comma = createTextNode({ characters: ", " });
+        const comma = createTextNode({ characters: " " });
         tasksFrame.appendChild(comma);
     }
     const taskNode = createTextNode({
@@ -225,6 +215,10 @@ function addTaskToFrame(tasksFrame, taskId, addComma = true) {
 }
 // Обновляем обработчик сообщений
 figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
+    if (msg.type === 'error') {
+        figma.notify(msg.message, { timeout: 2000, error: true });
+        return;
+    }
     if (msg.type === 'update-status') {
         const metadataFrame = updateMetadataFrame();
         if (metadataFrame) {
@@ -248,7 +242,7 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
         if (matches && matches[1]) {
             const existingTasksFrame = validFrame.findChild(node => node.name === "Task-list");
             if (existingTasksFrame) {
-                figma.notify("Фрейм Task-list уже существует в Frame-metadata", { error: true });
+                figma.notify("Фрейм Task-list уже существует в Frame-metadata", { timeout: 2000, error: true });
                 return;
             }
             const tasksText = matches[1];
@@ -256,7 +250,7 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             const tasksFrame = createTasksFrame(validFrame);
             yield figma.loadFontAsync({ family: "Inter", style: "Regular" });
             const labelNode = createTextNode({
-                characters: "Связанные задачи: ",
+                characters: "Задачи: ",
                 color: COLORS.grey
             });
             tasksFrame.appendChild(labelNode);
@@ -273,7 +267,11 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
             updateMetadataPosition(validFrame);
         }
     }
-    if (msg.type === 'add-task' && msg.taskId) {
+    if (msg.type === 'add-task') {
+        if (!msg.taskId || msg.taskId.trim() === '') {
+            figma.notify('Введите номер задачи', { timeout: 2000, error: true });
+            return;
+        }
         const metadataFrame = updateMetadataFrame();
         const validFrame = validateMetadataFrame(metadataFrame);
         if (!validFrame)
@@ -286,16 +284,25 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
         const children = tasksFrame.children;
         if (children.length === 0) {
             const labelNode = createTextNode({
-                characters: "Связанные задачи: ",
+                characters: "Задачи: ",
                 color: COLORS.grey
             });
             tasksFrame.appendChild(labelNode);
         }
-        addTaskToFrame(tasksFrame, msg.taskId);
+        // Разбиваем строку с задачами по запятой и обрабатываем каждый номер
+        const taskIds = msg.taskId.split(',').map(id => id.trim());
+        for (const taskId of taskIds) {
+            if (/^\d+$/.test(taskId)) { // Проверяем, что taskId содержит только цифры
+                addTaskToFrame(tasksFrame, taskId);
+            }
+        }
         tasksFrame.resize(tasksFrame.width, tasksFrame.height);
-        // Добавляем обновление позиции в конце
         updateMetadataPosition(validFrame);
-        figma.notify(`Задача с номером ${msg.taskId} добавлена`);
+        const taskCount = taskIds.length;
+        const taskWord = taskCount === 1 ? 'задача' : 'задач';
+        figma.notify(`${taskCount} ${taskWord} добавлено`);
     }
-    figma.closePlugin();
+    if (msg.type === 'update-status' || msg.type === 'rewrite-tasks' || msg.type === 'add-task') {
+        figma.closePlugin();
+    }
 });

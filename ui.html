@@ -163,9 +163,9 @@ h4 {
 <div class="task-management">
   <div class="task-input-container">
     <input 
-      type="number" 
+      type="text" 
       id="taskInput" 
-      placeholder="Номер задачи"
+      placeholder="№ задачи(несколько, через запятую)"
     >
     <button id="addTask">Добавить</button>
   </div>
@@ -221,18 +221,49 @@ h4 {
     parent.postMessage({ pluginMessage: { type: 'rewrite-tasks' } }, '*')
   }
 
-  document.getElementById('addTask').onclick = () => {
+  // Функция для добавления задачи
+  function addTask() {
     const taskInput = document.getElementById('taskInput');
-    const taskId = taskInput.value;
+    const taskIds = taskInput.value.trim();
     
-    if (taskId && /^\d+$/.test(taskId)) {
+    // Проверяем, что строка содержит только цифры, пробелы и запятые
+    if (!taskIds) {
       parent.postMessage({ 
         pluginMessage: { 
-          type: 'add-task',
-          taskId: taskId 
+          type: 'error',
+          message: 'Введите номер задачи'
         } 
       }, '*');
-      taskInput.value = ''; // Очищаем поле после отправки
+      return;
     }
+    
+    if (!/^[\d,\s]+$/.test(taskIds)) {
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'error',
+          message: 'Можно вводить только цифры, пробелы и запятые'
+        } 
+      }, '*');
+      return;
+    }
+    
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'add-task',
+        taskId: taskIds 
+      } 
+    }, '*');
+    taskInput.value = ''; // Очищаем поле после отправки
   }
+
+  // Обработчик для кнопки добавления
+  document.getElementById('addTask').onclick = addTask;
+
+  // Добавляем обработчик Enter для поля ввода
+  document.getElementById('taskInput').addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addTask();
+    }
+  });
 </script>
