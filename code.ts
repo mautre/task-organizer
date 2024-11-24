@@ -72,7 +72,7 @@ function updateMetadataFrame() {
   const selectedFrame = selection[0] as FrameNode;
 
   if (selectedFrame.parent && (selectedFrame.parent.type === 'FRAME' || selectedFrame.parent.type === 'GROUP')) {
-    figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне', { error: true });
+    figma.notify('Фрейм должен быть вложен только в Section или находиться на верхнем уровне', { timeout: 2000, error: true });
     return;
   }
 
@@ -84,11 +84,13 @@ function updateMetadataFrame() {
     metadataFrame.name = "Frame-metadata";
     metadataFrame.layoutMode = "VERTICAL";
     metadataFrame.locked = true;
-    metadataFrame.layoutSizingVertical = 'HUG';
+    metadataFrame.layoutSizingVertical = 'FIXED';
     metadataFrame.layoutSizingHorizontal = 'HUG';
     metadataFrame.fills = [];
     metadataFrame.itemSpacing = 16;
-    
+    metadataFrame.resize(metadataFrame.width, 125);
+    metadataFrame.primaryAxisAlignItems = 'MAX';
+
     // Добавляем как последний элемент
     selectedFrame.appendChild(metadataFrame);
   } else {
@@ -106,12 +108,17 @@ function updateMetadataFrame() {
     metadataFrame.layoutPositioning = 'ABSOLUTE';
   }
   
-  metadataFrame.x = 0;
-  metadataFrame.y = -metadataFrame.height - 16;
+  updateMetadataPosition(metadataFrame);
 
   return metadataFrame;
 }
 
+function updateMetadataPosition(metadataFrame: FrameNode) {
+  if (metadataFrame && metadataFrame.parent) {
+    metadataFrame.x = 0;
+    metadataFrame.y = -metadataFrame.height - 16;
+  }
+}
 
 async function updateStatus(status: string, metadataFrame: FrameNode) {
   await loadFonts();
@@ -198,12 +205,6 @@ function validateMetadataFrame(metadataFrame: FrameNode): FrameNode | null {
   return metadataFrame;
 }
 
-function updateMetadataPosition(metadataFrame: FrameNode) {
-  if (metadataFrame && metadataFrame.parent) {
-    metadataFrame.x = 0;
-    metadataFrame.y = -metadataFrame.height - 8;
-  }
-}
 
 function createTextNode(props: {
   characters: string,
@@ -230,10 +231,10 @@ function createTaskLink(taskId: string) {
   return `https://inside.notamedia.ru/company/personal/user/1/tasks/task/view/${taskId}/`;
 }
 
-function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addComma: boolean = true) {
-  if (addComma && tasksFrame.children.length > 1) {
-    const comma = createTextNode({ characters: " " });
-    tasksFrame.appendChild(comma);
+function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addSeparator: boolean = true) {
+  if (addSeparator && tasksFrame.children.length > 1) {
+    const separator = createTextNode({ characters: " " });
+    tasksFrame.appendChild(separator);
   }
   
   const taskNode = createTextNode({
@@ -269,52 +270,52 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     const selection = figma.currentPage.selection;
     const selectedFrame = selection[0];
     const frameName = selectedFrame.name;
-    const matches = frameName.match(/\[(.*?)\]/);
+    // Находим все совпадения [...] в имени фрейма
+    const matches = frameName.match(/\[(.*?)\]/g);
     
     if (!matches) {
       figma.notify("[Задач] в названии не найдено");
       return;
     }
 
-    if (matches && matches[1]) {
-      const existingTasksFrame = validFrame.findChild(node => node.name === "Task-list");
-      
-      if (existingTasksFrame) {
-        figma.notify("Фрейм Task-list уже существует в Frame-metadata", { timeout: 2000, error: true });
-        return;
-      }
-      
-      const tasksText = matches[1];
-      const taskIds = tasksText.split(',').map(id => id.trim());
-      
-      const tasksFrame = createTasksFrame(validFrame);
-      
-      await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-      
-      const labelNode = createTextNode({ 
-        characters: "Задачи: ",
-        color: COLORS.grey 
-      });
-      tasksFrame.appendChild(labelNode);
-      
-      for (let i = 0; i < taskIds.length; i++) {
-        const taskId = taskIds[i];
-        if (/^\d+$/.test(taskId)) {
-          addTaskToFrame(tasksFrame, taskId);
-        }
-      }
-      
-      tasksFrame.resize(
-        tasksFrame.width,
-        tasksFrame.height
-      );
-      
-      // Удаляем номера задач из названия фрейма
-      selectedFrame.name = frameName.replace(/\[.*?\]/, '').trim();
-      
-      // Добавляем обновление позиции в конце
-      updateMetadataPosition(validFrame);
+    const existingTasksFrame = validFrame.findChild(node => node.name === "Task-list");
+    
+    if (existingTasksFrame) {
+      figma.notify("Фрейм Task-list уже существует в Frame-metadata", { timeout: 2000, error: true });
+      return;
     }
+    
+    // Собираем все задачи из всех блоков [...]
+    const taskIds = matches
+      .map(match => match.slice(1, -1)) // Убираем квадратные скобки
+      .join(',') // Объединяем все блоки через запятую
+      .split(',') // Разбиваем на отдельные задачи
+      .map(id => id.trim()) // Убираем пробелы
+      .filter(id => /^\d+$/.test(id)); // Оставляем только числовые ID
+    
+    const tasksFrame = createTasksFrame(validFrame);
+    
+    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+    
+    const labelNode = createTextNode({ 
+      characters: "task: ",
+      color: COLORS.grey 
+    });
+    tasksFrame.appendChild(labelNode);
+    
+    for (let i = 0; i < taskIds.length; i++) {
+      addTaskToFrame(tasksFrame, taskIds[i]);
+    }
+    
+    tasksFrame.resize(
+      tasksFrame.width,
+      tasksFrame.height
+    );
+    
+    // Удаляем все блоки [...] из названия фрейма
+    selectedFrame.name = frameName.replace(/\[.*?\]/g, '').trim();
+    
+    updateMetadataPosition(validFrame);
   }
   
   if (msg.type === 'add-task') {
@@ -338,7 +339,7 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     const children = tasksFrame.children;
     if (children.length === 0) {
       const labelNode = createTextNode({ 
-        characters: "Задачи: ",
+        characters: "task: ",
         color: COLORS.grey 
       });
       tasksFrame.appendChild(labelNode);
@@ -366,6 +367,6 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
   }
   
   if (msg.type === 'update-status' || msg.type === 'rewrite-tasks' || msg.type === 'add-task') {
-    figma.closePlugin();
+    // figma.closePlugin();
   }
 };
