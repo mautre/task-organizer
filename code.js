@@ -108,7 +108,7 @@ function updateMetadataPosition(metadataFrame) {
         metadataFrame.y = -metadataFrame.height - 16;
     }
 }
-function updateStatus(status, metadataFrame) {
+function updateStatus(status, metadataFrame, taskId) {
     return __awaiter(this, void 0, void 0, function* () {
         yield loadFonts();
         // await figma.loadAllPagesAsync();
@@ -160,6 +160,15 @@ function updateStatus(status, metadataFrame) {
         statusLabel.characters = statusConfig.label;
         if (metadataFrame.parent && 'opacity' in metadataFrame.parent) {
             metadataFrame.parent.opacity = statusConfig.opacity;
+        }
+        // Сбрасываем стили гиперссылки по умолчанию
+        statusLabel.hyperlink = null;
+        statusLabel.textDecoration = "NONE";
+        // Добавляем гиперссылку и номер задачи для статуса "check-it" при наличии taskId
+        if (status === 'check-it' && taskId) {
+            statusLabel.characters = `${statusConfig.label} [${taskId}]`;
+            statusLabel.hyperlink = { type: "URL", value: createTaskLink(taskId) };
+            statusLabel.textDecoration = "UNDERLINE";
         }
     });
 }
@@ -223,7 +232,7 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
     if (msg.type === 'update-status') {
         const metadataFrame = updateMetadataFrame();
         if (metadataFrame) {
-            yield updateStatus(msg.status, metadataFrame);
+            yield updateStatus(msg.status, metadataFrame, msg.taskId);
             updateMetadataPosition(metadataFrame);
         }
     }

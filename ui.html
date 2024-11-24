@@ -65,7 +65,7 @@ h4 {
 
   /* Специфичные цвета для кнопок статуса */
   .status-button.in-progress { background-color: var(--in-progress-color); }
-  .status-button.check-it { background-color: var(--check-it-color); }
+  .status-button.check-it { background-color: var(--check-it-color); color: white; }
   .status-button.not-relevant { background-color: var(--not-relevant-color); }
   .status-button.done { background-color: var(--primary-color); }
 
@@ -76,6 +76,28 @@ h4 {
     margin-top: var(--spacing-s);
     width: var(--button-width);
   }
+  .task-input-container input {
+    padding: var(--spacing-s);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: 1px solid var(--figma-color-border);
+  }
+  /* Добавляем стили для нового контейнера */
+  .check-it-container {
+    display: flex;
+    gap: var(--spacing-s);
+    /* width: var(--button-width); */
+  }
+
+  .check-it-container input {
+    padding: var(--spacing-s);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: 1px solid var(--figma-color-border);
+  }
+
 
   /* Стили для input */
   input[type="number"] {
@@ -111,12 +133,22 @@ h4 {
     padding-top: var(--spacing-s);
   }
 
+  /* Группируем элементы для работы со статусами */
+  .status-management {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-s);
+    width: var(--button-width);
+  }
+
   /* Адаптивность */
   @media (max-width: 600px) {
     button,
     .task-input-container,
     .separator,
-    .task-management {
+    .task-management,
+    .status-management,
+    .check-it-container {
       width: 100%;
     }
   }
@@ -148,14 +180,24 @@ h4 {
     outline: 2px solid var(--figma-color-border-brand-strong);
     outline-offset: 2px;
   }
+
 </style>
 <h4>Статусы</h4>
-<!-- Кнопки статусов -->
-<button class="status-button in-progress" data-status="in-progress">В процессе</button>
-<button class="status-button check-it" data-status="check-it">На проверку</button>
-<button class="status-button not-relevant" data-status="not-relevant">Не актуально</button>
-<button class="status-button done" data-status="done">Готово</button>
-
+<div class="status-management">
+  <!-- Кнопки статусов -->
+  <button class="status-button in-progress" data-status="in-progress">В процессе</button>
+  <div class="check-it-container">
+    <input 
+      type="text" 
+      id="checkItTaskInput" 
+      placeholder="№ задачи"
+      pattern="[0-9]*"
+    >
+    <button class="status-button check-it" data-status="check-it">На проверку</button>
+  </div>
+  <button class="status-button not-relevant" data-status="not-relevant">Не актуально</button>
+  <button class="status-button done" data-status="done">Готово</button>
+</div>
 <!-- Разделитель -->
 <div class="separator"></div>
 <h4>Связанные задачи</h4>
@@ -182,14 +224,26 @@ h4 {
     buttons[currentFocusIndex].focus();
   });
 
-  const updateStatus = (status) => {
-    parent.postMessage({ pluginMessage: { type: 'update-status', status } }, '*');
+  const updateStatus = (status, taskId = '') => {
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'update-status', 
+        status,
+        taskId 
+      } 
+    }, '*');
   };
   
   // Обработчик клика по кнопкам
   document.querySelectorAll('.status-button').forEach(button => {
     button.onclick = () => {
-      updateStatus(button.dataset.status);
+      const status = button.dataset.status;
+      if (status === 'check-it') {
+        const taskInput = document.getElementById('checkItTaskInput');
+        updateStatus(status, taskInput.value.trim());
+      } else {
+        updateStatus(status);
+      }
     };
   });
 
