@@ -185,13 +185,20 @@ function updateMetadataFrame() {
             metadataFrame.primaryAxisAlignItems = 'MAX';
             metadataFrame.clipsContent = false;
             metadataFrame.locked = true;
+            // Добавляем как последний элемент
+            selectedFrame.appendChild(metadataFrame);
+            // Устанавливаем layoutPositioning только если родительский фрейм имеет layoutMode
             if (selectedFrame.layoutMode !== 'NONE') {
                 metadataFrame.layoutPositioning = 'ABSOLUTE';
             }
-            // Добавляем как последний элемент
-            selectedFrame.appendChild(metadataFrame);
         }
         else {
+            if (selectedFrame.layoutMode !== 'NONE') {
+                metadataFrame.layoutPositioning = 'ABSOLUTE';
+            }
+            else {
+                metadataFrame.layoutPositioning = 'AUTO';
+            }
             // Если Frame-metadata уже существует, но не является последним элементом
             const lastIndex = selectedFrame.children.length - 1;
             const currentIndex = selectedFrame.children.indexOf(metadataFrame);

@@ -213,12 +213,20 @@ function updateMetadataFrame() {
       metadataFrame.primaryAxisAlignItems = 'MAX';
       metadataFrame.clipsContent = false;
       metadataFrame.locked = true;
+      
+      // Добавляем как последний элемент
+      selectedFrame.appendChild(metadataFrame);
+
+      // Устанавливаем layoutPositioning только если родительский фрейм имеет layoutMode
       if (selectedFrame.layoutMode !== 'NONE') {
         metadataFrame.layoutPositioning = 'ABSOLUTE';
       }
-      // Добавляем как последний элемент
-      selectedFrame.appendChild(metadataFrame);
     } else {
+      if (selectedFrame.layoutMode !== 'NONE') {
+        metadataFrame.layoutPositioning = 'ABSOLUTE';
+      } else {
+        metadataFrame.layoutPositioning = 'AUTO';
+      }
       // Если Frame-metadata уже существует, но не является последним элементом
       const lastIndex = selectedFrame.children.length - 1;
       const currentIndex = selectedFrame.children.indexOf(metadataFrame);
@@ -228,11 +236,9 @@ function updateMetadataFrame() {
       else if (selectedFrame.layoutMode === 'NONE' && currentIndex !== 0) {
         selectedFrame.insertChild(0, metadataFrame);
       }
-      
     }
     
     updateMetadataPosition(metadataFrame);
-
     return metadataFrame;
   } catch (error) {
     notify(TRY_ERRORS.METADATA_UPDATE, true);
@@ -240,7 +246,6 @@ function updateMetadataFrame() {
     return null;
   }
 }
-
 function updateMetadataPosition(metadataFrame: FrameNode) {
   if (metadataFrame && metadataFrame.parent) {
     metadataFrame.x = 0;
@@ -535,3 +540,4 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
   }
 
 };
+
