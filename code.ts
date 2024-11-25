@@ -211,12 +211,11 @@ function updateMetadataFrame() {
       metadataFrame.itemSpacing = METADATA.SPACING;
       metadataFrame.resize(metadataFrame.width, METADATA.DEFAULT_HEIGHT);
       metadataFrame.primaryAxisAlignItems = 'MAX';
-      
+      metadataFrame.clipsContent = false;
       metadataFrame.locked = true;
       if (selectedFrame.layoutMode !== 'NONE') {
         metadataFrame.layoutPositioning = 'ABSOLUTE';
       }
-      console.log(metadataFrame);
       // Добавляем как последний элемент
       selectedFrame.appendChild(metadataFrame);
     } else {
@@ -229,6 +228,7 @@ function updateMetadataFrame() {
       else if (selectedFrame.layoutMode === 'NONE' && currentIndex !== 0) {
         selectedFrame.insertChild(0, metadataFrame);
       }
+      
     }
     
     updateMetadataPosition(metadataFrame);
@@ -246,6 +246,7 @@ function updateMetadataPosition(metadataFrame: FrameNode) {
     metadataFrame.x = 0;
     metadataFrame.y = -metadataFrame.height - 16;
   }
+  metadataFrame.clipsContent = false;
 }
 
 function createStatusFrame(): FrameNode {
@@ -366,6 +367,15 @@ function validateMetadataFrame(metadataFrame: FrameNode): FrameNode | null {
   return metadataFrame;
 }
 
+async function updateTaskLabel(metadataFrame: FrameNode) {
+  await loadFonts();
+  let taskList = metadataFrame.findChild(node => node.name === METADATA.TASK_LIST_NAME) as FrameNode;
+  let taskLabel = taskList.children[0] as TextNode;
+  if (taskLabel) {
+    taskLabel.characters = METADATA.TASK_LABEL_NAME;
+  }
+}
+
 
 function createTextNode(props: {
   characters: string,
@@ -392,6 +402,7 @@ function createTextNode(props: {
 function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addSeparator: boolean = true) {
   if (addSeparator && tasksFrame.children.length > 1) {
     const separator = createTextNode({ characters: " " });
+    separator.name = '...';
     tasksFrame.appendChild(separator);
   }
   
@@ -416,6 +427,7 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     const metadataFrame = updateMetadataFrame();
     if (metadataFrame) {
       await updateStatus(msg.status!, metadataFrame, msg.taskId);
+      await updateTaskLabel(metadataFrame);
       updateMetadataPosition(metadataFrame);
     }
   }
@@ -469,6 +481,7 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     // Удаляем все блоки [...] из названия фрейма
     selectedFrame.name = frameName.replace(/\[.*?\]/g, '').trim();
     
+    await updateTaskLabel(validFrame);
     updateMetadataPosition(validFrame);
   }
   
@@ -514,7 +527,8 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
       tasksFrame.width,
       tasksFrame.height
     );
-    
+
+    await updateTaskLabel(validFrame);
     updateMetadataPosition(validFrame);
     
     figma.notify(`Добавлены задачи: ${addedTasks.join(', ')}`);

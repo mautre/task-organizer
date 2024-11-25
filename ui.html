@@ -218,9 +218,9 @@ h4 {
   const buttons = Array.from(document.querySelectorAll('.status-button'));
   let currentFocusIndex = -1;
 
-  // Устанавливаем фокус на первую кнопку при загрузке
+  // Устанавливаем фокус на кнопку "Готово" при загрузке
   window.addEventListener('load', () => {
-    currentFocusIndex = 0;
+    currentFocusIndex = buttons.length - 1; // Индекс последней кнопки
     buttons[currentFocusIndex].focus();
   });
 
