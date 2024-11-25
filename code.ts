@@ -5,6 +5,15 @@ interface RGB {
   readonly b: number;
 }
 
+// Добавить типизацию для сообщений UI
+interface UIMessage {
+  type: 'error' | 'update-status' | 'rewrite-tasks' | 'add-task';
+  status?: string;
+  taskId?: string;
+  message?: string;
+}
+
+
 // Константы для метаданных
 const METADATA = {
   FRAME_NAME: 'Frame-metadata',
@@ -38,7 +47,8 @@ const TRY_ERRORS = {
   FONTS_LOAD: 'Ошибка загрузки шрифтов',
   METADATA_UPDATE: 'Ошибка при обновлении метаданных',
   STATUS_UPDATE: 'Ошибка при обновлении статуса',
-  UNEXPECTED: 'Произошла непредвиденная ошибка'
+  UNEXPECTED: 'Произошла непредвиденная ошибка',
+  TASKS_FRAME_CREATE: 'Ошибка при создании фрейма задач'
 } as const;
 
 // URL шаблоны
@@ -352,16 +362,22 @@ async function updateStatus(status: string, metadataFrame: FrameNode, taskId?: s
 
 // Добавление функционала Task-linker
 function createTasksFrame(metadataFrame: FrameNode): FrameNode {
-  const tasksFrame = figma.createFrame();
-  tasksFrame.name = METADATA.TASK_LIST_NAME;
-  tasksFrame.layoutMode = "HORIZONTAL";
-  tasksFrame.layoutSizingVertical = 'HUG';
-  tasksFrame.layoutSizingHorizontal = 'HUG';
-  tasksFrame.fills = [];
-  tasksFrame.itemSpacing = 4;
-  tasksFrame.paddingBottom = 8;
-  metadataFrame.appendChild(tasksFrame);
-  return tasksFrame;
+  try {
+    const tasksFrame = figma.createFrame();
+    tasksFrame.name = METADATA.TASK_LIST_NAME;
+    tasksFrame.layoutMode = "HORIZONTAL";
+    tasksFrame.layoutSizingVertical = 'HUG';
+    tasksFrame.layoutSizingHorizontal = 'HUG';
+    tasksFrame.fills = [];
+    tasksFrame.itemSpacing = 4;
+    tasksFrame.paddingBottom = 8;
+    metadataFrame.appendChild(tasksFrame);
+    return tasksFrame;
+  } catch (error) {
+    notify(TRY_ERRORS.TASKS_FRAME_CREATE, true);
+    console.error(TRY_ERRORS.TASKS_FRAME_CREATE, error);
+    throw error;
+  }
 }
 
 function validateMetadataFrame(metadataFrame: FrameNode): FrameNode | null {
@@ -422,7 +438,7 @@ function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addSeparator: boo
 }
 
 // Обновляем обработчик сообщений
-figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: string, message?: string }) => {
+figma.ui.onmessage = async (msg: UIMessage) => {
   if (msg.type === 'error') {
     notify(msg.message!, true);
     return;
@@ -538,6 +554,4 @@ figma.ui.onmessage = async (msg: { type: string, status?: string, taskId?: strin
     
     figma.notify(`Добавлены задачи: ${addedTasks.join(', ')}`);
   }
-
 };
-

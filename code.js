@@ -39,7 +39,8 @@ const TRY_ERRORS = {
     FONTS_LOAD: 'Ошибка загрузки шрифтов',
     METADATA_UPDATE: 'Ошибка при обновлении метаданных',
     STATUS_UPDATE: 'Ошибка при обновлении статуса',
-    UNEXPECTED: 'Произошла непредвиденная ошибка'
+    UNEXPECTED: 'Произошла непредвиденная ошибка',
+    TASKS_FRAME_CREATE: 'Ошибка при создании фрейма задач'
 };
 // URL шаблоны
 const URL_TEMPLATES = {
@@ -308,16 +309,23 @@ function updateStatus(status, metadataFrame, taskId) {
 }
 // Добавление функционала Task-linker
 function createTasksFrame(metadataFrame) {
-    const tasksFrame = figma.createFrame();
-    tasksFrame.name = METADATA.TASK_LIST_NAME;
-    tasksFrame.layoutMode = "HORIZONTAL";
-    tasksFrame.layoutSizingVertical = 'HUG';
-    tasksFrame.layoutSizingHorizontal = 'HUG';
-    tasksFrame.fills = [];
-    tasksFrame.itemSpacing = 4;
-    tasksFrame.paddingBottom = 8;
-    metadataFrame.appendChild(tasksFrame);
-    return tasksFrame;
+    try {
+        const tasksFrame = figma.createFrame();
+        tasksFrame.name = METADATA.TASK_LIST_NAME;
+        tasksFrame.layoutMode = "HORIZONTAL";
+        tasksFrame.layoutSizingVertical = 'HUG';
+        tasksFrame.layoutSizingHorizontal = 'HUG';
+        tasksFrame.fills = [];
+        tasksFrame.itemSpacing = 4;
+        tasksFrame.paddingBottom = 8;
+        metadataFrame.appendChild(tasksFrame);
+        return tasksFrame;
+    }
+    catch (error) {
+        notify(TRY_ERRORS.TASKS_FRAME_CREATE, true);
+        console.error(TRY_ERRORS.TASKS_FRAME_CREATE, error);
+        throw error;
+    }
 }
 function validateMetadataFrame(metadataFrame) {
     if (!metadataFrame || metadataFrame.type !== "FRAME") {

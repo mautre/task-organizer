@@ -18,6 +18,9 @@
     --button-secondary-bg: rgba(0, 0, 0, 0.05);
     --button-secondary-pressed: rgba(0, 0, 0, 0.1);
     --button-secondary-hover: rgba(0, 0, 0, 0.08);
+    --input-padding: var(--spacing-s);
+    --input-border: 1px solid var(--figma-color-border);
+    --focus-outline: 2px solid black;
   }
 
   body {
@@ -181,6 +184,22 @@ h4 {
     outline-offset: 2px;
   }
 
+  /* Создать общий класс для инпутов */
+  .input-common {
+    padding: var(--input-padding);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: var(--input-border);
+  }
+
+  /* Использовать общий класс */
+  .task-input-container input,
+  .check-it-container input,
+  input[type="number"] {
+    @extend .input-common;
+  }
+
 </style>
 <h4>Статусы</h4>
 <div class="status-management">
@@ -192,8 +211,11 @@ h4 {
       id="checkItTaskInput" 
       placeholder="№ задачи"
       pattern="[0-9]*"
+      aria-label="Номер задачи для проверки"
     >
-    <button class="status-button check-it" data-status="check-it">На проверку</button>
+    <button class="status-button check-it" data-status="check-it" aria-label="Отправить задачу на проверку">
+      На проверку
+    </button>
   </div>
   <button class="status-button not-relevant" data-status="not-relevant">Не актуально</button>
   <button class="status-button done" data-status="done">Готово</button>
@@ -289,29 +311,30 @@ h4 {
     parent.postMessage({ pluginMessage: { type: 'rewrite-tasks' } }, '*')
   }
 
+  // Функции для валидации и отображения ошибок
+  const validateInput = (value, pattern) => {
+    if (!value) return { isValid: false, message: 'Введите номер задачи' };
+    if (!pattern.test(value)) return { isValid: false, message: 'Можно вводить только цифры, пробелы и запятые' };
+    return { isValid: true };
+  };
+
+  const showError = (message) => {
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'error',
+        message 
+      } 
+    }, '*');
+  };
+
   // Функция для добавления задачи
   function addTask() {
     const taskInput = document.getElementById('taskInput');
     const taskIds = taskInput.value.trim();
     
-    // Проверяем, что строка содержит только цифры, пробелы и запятые
-    if (!taskIds) {
-      parent.postMessage({ 
-        pluginMessage: { 
-          type: 'error',
-          message: 'Введите номер задачи'
-        } 
-      }, '*');
-      return;
-    }
-    
-    if (!/^[\d,\s]+$/.test(taskIds)) {
-      parent.postMessage({ 
-        pluginMessage: { 
-          type: 'error',
-          message: 'Можно вводить только цифры, пробелы и запятые'
-        } 
-      }, '*');
+    const validation = validateInput(taskIds, /^[\d,\s]+$/);
+    if (!validation.isValid) {
+      showError(validation.message);
       return;
     }
     
