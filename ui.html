@@ -240,7 +240,21 @@ h4 {
       const status = button.dataset.status;
       if (status === 'check-it') {
         const taskInput = document.getElementById('checkItTaskInput');
-        updateStatus(status, taskInput.value.trim());
+        const taskValue = taskInput.value.trim();
+        
+        // Проверяем, что введено только число или пустая строка
+        if (taskValue && !/^\d+$/.test(taskValue)) {
+          parent.postMessage({ 
+            pluginMessage: { 
+              type: 'error',
+              message: 'Введите корректный номер задачи (только цифры)'
+            } 
+          }, '*');
+          return;
+        }
+        
+        updateStatus(status, taskValue);
+        taskInput.value = '';
       } else {
         updateStatus(status);
       }
