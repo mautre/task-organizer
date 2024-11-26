@@ -40,7 +40,8 @@ const NOTIFICATIONS = {
   NO_TASKS: '[Задач] в названии не найдено',
   TASK_LIST_EXISTS: 'Фрейм Task-list уже существует в Frame-metadata',
   ENTER_TASK_NUMBER: 'Введите номер задачи',
-  STATUS_ERROR: 'Ошибка: не удалось найти элементы статуса'
+  STATUS_ERROR: 'Ошибка: не удалось найти элементы статуса',
+  STATUS_APPLIED: 'Статус "{status}" применен'
 } as const;
 
 const TRY_ERRORS = {
@@ -327,7 +328,6 @@ async function updateStatus(status: string, metadataFrame: FrameNode, taskId?: s
     if (isDone && metadataFrame.parent && 'opacity' in metadataFrame.parent) {
       statusFrame.visible = false;
       metadataFrame.parent.opacity = statusConfig.opacity;
-      return;
     }
     else {
       statusFrame.visible = true;
@@ -363,12 +363,14 @@ async function updateStatus(status: string, metadataFrame: FrameNode, taskId?: s
       metadataFrame.parent.opacity = statusConfig.opacity;
     }
 
+    // Добавляем уведомление об успешном применении статуса
+    notify(NOTIFICATIONS.STATUS_APPLIED.replace('{status}', statusConfig.label));
+
   } catch (error) {
     notify(TRY_ERRORS.STATUS_UPDATE, true);
     console.error(TRY_ERRORS.STATUS_UPDATE, error);
   }
 }
-
 // Добавление функционала Task-linker
 function createTasksFrame(metadataFrame: FrameNode): FrameNode {
   try {
