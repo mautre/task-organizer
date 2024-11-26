@@ -13,7 +13,6 @@ interface UIMessage {
   message?: string;
 }
 
-
 // Константы для метаданных
 const METADATA = {
   FRAME_NAME: 'Frame-metadata',
@@ -35,7 +34,7 @@ const METADATA = {
 // Уведомления
 const NOTIFICATIONS = {
   SELECT_ONE_FRAME: 'Выберите один фрейм',
-  SECTION_ERROR: 'Нельзя применить к секции',
+  SECTION_ERROR: 'Нельзя применить к Section',
   NESTING_ERROR: 'Фрейм должен быть вложен только в Section или находиться на верхнем уровне',
   NO_TASKS: '[Задач] в названии не найдено',
   TASK_LIST_EXISTS: 'Фрейм Task-list уже существует в Frame-metadata',
@@ -115,8 +114,6 @@ function createTaskLink(taskId: string): string {
   return `${URL_TEMPLATES.TASK}/${taskId}/`;
 }
 
-// ... остальной код ...
-
 figma.showUI(__html__, {
   width: 360,
   height: 420,
@@ -194,6 +191,7 @@ function updateMetadataFrame() {
       exportFrame.paddingLeft = selectedFrame.paddingLeft;
       exportFrame.paddingRight = selectedFrame.paddingRight;
       exportFrame.fills = selectedFrame.fills;
+      exportFrame.cornerRadius = selectedFrame.cornerRadius;
       
       // Перемещаем всё содержимое кроме Frame-metadata в Export фрейм
       const metadataFrame = selectedFrame.findChild(node => node.name === METADATA.FRAME_NAME);
@@ -210,7 +208,6 @@ function updateMetadataFrame() {
     }
 
     // Настраиваем выбранный фрейм
-    // selectedFrame.layoutMode = "VERTICAL";
     selectedFrame.paddingTop = 0;
     selectedFrame.paddingBottom = 0;
     selectedFrame.paddingLeft = 0;
@@ -332,7 +329,6 @@ async function updateStatus(status: string, metadataFrame: FrameNode, taskId?: s
     else {
       statusFrame.visible = true;
     }
-    
 
     // Получаем все необходимые элементы за один проход
     const [statusIndicator, statusLabel] = [
@@ -408,7 +404,6 @@ async function updateTaskLabel(metadataFrame: FrameNode) {
   }
 }
 
-
 function createTextNode(props: {
   characters: string,
   color?: RGB,
@@ -429,7 +424,6 @@ function createTextNode(props: {
   }
   return textNode;
 }
-
 
 function addTaskToFrame(tasksFrame: FrameNode, taskId: string, addSeparator: boolean = true) {
   if (addSeparator && tasksFrame.children.length > 1) {
