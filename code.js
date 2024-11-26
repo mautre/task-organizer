@@ -129,10 +129,12 @@ function updateMetadataFrame() {
             return;
         }
         // Проверяем существование Export фрейма
-        let exportFrame = selectedFrame.findChild(node => node.name === 'Export');
+        let exportFrame = selectedFrame.findChild(node => node.name.startsWith('Export'));
+        // Очищаем имя от номеров задач в квадратных скобках
+        const cleanName = selectedFrame.name.replace(/\[.*?\]/g, '').trim();
         if (!exportFrame) {
             exportFrame = figma.createFrame();
-            exportFrame.name = 'Export';
+            exportFrame.name = `Export — ${cleanName}`;
             // Копируем свойства из выбранного фрейма
             // Сначала устанавливаем базовые размеры и позицию
             exportFrame.resize(selectedFrame.width, selectedFrame.height);
@@ -164,6 +166,10 @@ function updateMetadataFrame() {
                 }
             }
             selectedFrame.appendChild(exportFrame);
+        }
+        else {
+            // Обновляем имя существующего Export фрейма
+            exportFrame.name = `Export — ${cleanName}`;
         }
         // Настраиваем выбранный фрейм
         // selectedFrame.layoutMode = "VERTICAL";

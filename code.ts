@@ -157,11 +157,16 @@ function updateMetadataFrame() {
     }
 
     // Проверяем существование Export фрейма
-    let exportFrame = selectedFrame.findChild(node => node.name === 'Export') as FrameNode;
+    let exportFrame = selectedFrame.findChild(node => 
+      node.name.startsWith('Export')
+    ) as FrameNode;
+    
+    // Очищаем имя от номеров задач в квадратных скобках
+    const cleanName = selectedFrame.name.replace(/\[.*?\]/g, '').trim();
     
     if (!exportFrame) {
       exportFrame = figma.createFrame();
-      exportFrame.name = 'Export';
+      exportFrame.name = `Export — ${cleanName}`;
       
       // Копируем свойства из выбранного фрейма
       // Сначала устанавливаем базовые размеры и позицию
@@ -198,6 +203,9 @@ function updateMetadataFrame() {
       }
       
       selectedFrame.appendChild(exportFrame);
+    } else {
+      // Обновляем имя существующего Export фрейма
+      exportFrame.name = `Export — ${cleanName}`;
     }
 
     // Настраиваем выбранный фрейм
