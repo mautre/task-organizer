@@ -187,6 +187,7 @@ function updateMetadataFrame() {
       exportFrame.paddingBottom = selectedFrame.paddingBottom;
       exportFrame.paddingLeft = selectedFrame.paddingLeft;
       exportFrame.paddingRight = selectedFrame.paddingRight;
+      exportFrame.fills = selectedFrame.fills;
       
       // Перемещаем всё содержимое кроме Frame-metadata в Export фрейм
       const metadataFrame = selectedFrame.findChild(node => node.name === METADATA.FRAME_NAME);
