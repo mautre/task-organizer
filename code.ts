@@ -7,12 +7,11 @@ interface RGB {
 
 // Добавить типизацию для сообщений UI
 interface UIMessage {
-  type: 'error' | 'update-status' | 'rewrite-tasks' | 'add-task';
+  type: 'error' | 'update-status' | 'rewrite-tasks' | 'add-task' | 'clear-tasks';
   status?: string;
   taskId?: string;
   message?: string;
 }
-
 // Константы для метаданных
 const METADATA = {
   FRAME_NAME: 'Frame-metadata',
@@ -40,7 +39,8 @@ const NOTIFICATIONS = {
   TASK_LIST_EXISTS: 'Фрейм Task-list уже существует в Frame-metadata',
   ENTER_TASK_NUMBER: 'Введите номер задачи',
   STATUS_ERROR: 'Ошибка: не удалось найти элементы статуса',
-  STATUS_APPLIED: 'Статус "{status}" применен'
+  STATUS_APPLIED: 'Статус "{status}" применен',
+  TASKS_CLEARED: 'Список задач очищен'
 } as const;
 
 const TRY_ERRORS = {
@@ -116,7 +116,7 @@ function createTaskLink(taskId: string): string {
 
 figma.showUI(__html__, {
   width: 360,
-  height: 420,
+  height: 460,
   themeColors: true,
   title: "Изменить статус и номера задач"
 });
@@ -559,4 +559,17 @@ figma.ui.onmessage = async (msg: UIMessage) => {
     
     figma.notify(`Добавлены задачи: ${addedTasks.join(', ')}`);
   }
+  
+  if (msg.type === 'clear-tasks') {
+    const metadataFrame = updateMetadataFrame();
+    const validFrame = validateMetadataFrame(metadataFrame!);
+    if (!validFrame) return;
+
+    const tasksFrame = validFrame.findChild(node => node.name === METADATA.TASK_LIST_NAME);
+    if (tasksFrame) {
+      tasksFrame.remove();
+      notify(NOTIFICATIONS.TASKS_CLEARED);
+    }
+  }
 };
+

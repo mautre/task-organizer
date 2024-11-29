@@ -28,13 +28,14 @@ const METADATA = {
 // Уведомления
 const NOTIFICATIONS = {
     SELECT_ONE_FRAME: 'Выберите один фрейм',
-    SECTION_ERROR: 'Нельзя применить к секции',
+    SECTION_ERROR: 'Нельзя применить к Section',
     NESTING_ERROR: 'Фрейм должен быть вложен только в Section или находиться на верхнем уровне',
     NO_TASKS: '[Задач] в названии не найдено',
     TASK_LIST_EXISTS: 'Фрейм Task-list уже существует в Frame-metadata',
     ENTER_TASK_NUMBER: 'Введите номер задачи',
     STATUS_ERROR: 'Ошибка: не удалось найти элементы статуса',
-    STATUS_APPLIED: 'Статус "{status}" применен'
+    STATUS_APPLIED: 'Статус "{status}" применен',
+    TASKS_CLEARED: 'Список задач очищен'
 };
 const TRY_ERRORS = {
     FONTS_LOAD: 'Ошибка загрузки шрифтов',
@@ -92,10 +93,9 @@ function notify(message, error = false) {
 function createTaskLink(taskId) {
     return `${URL_TEMPLATES.TASK}/${taskId}/`;
 }
-// ... остальной код ...
 figma.showUI(__html__, {
     width: 360,
-    height: 420,
+    height: 460,
     themeColors: true,
     title: "Изменить статус и номера задач"
 });
@@ -159,6 +159,7 @@ function updateMetadataFrame() {
             exportFrame.paddingLeft = selectedFrame.paddingLeft;
             exportFrame.paddingRight = selectedFrame.paddingRight;
             exportFrame.fills = selectedFrame.fills;
+            exportFrame.cornerRadius = selectedFrame.cornerRadius;
             // Перемещаем всё содержимое кроме Frame-metadata в Export фрейм
             const metadataFrame = selectedFrame.findChild(node => node.name === METADATA.FRAME_NAME);
             for (const child of [...selectedFrame.children]) {
@@ -173,7 +174,6 @@ function updateMetadataFrame() {
             exportFrame.name = `Export — ${cleanName}`;
         }
         // Настраиваем выбранный фрейм
-        // selectedFrame.layoutMode = "VERTICAL";
         selectedFrame.paddingTop = 0;
         selectedFrame.paddingBottom = 0;
         selectedFrame.paddingLeft = 0;
@@ -471,5 +471,16 @@ figma.ui.onmessage = (msg) => __awaiter(void 0, void 0, void 0, function* () {
         yield updateTaskLabel(validFrame);
         updateMetadataPosition(validFrame);
         figma.notify(`Добавлены задачи: ${addedTasks.join(', ')}`);
+    }
+    if (msg.type === 'clear-tasks') {
+        const metadataFrame = updateMetadataFrame();
+        const validFrame = validateMetadataFrame(metadataFrame);
+        if (!validFrame)
+            return;
+        const tasksFrame = validFrame.findChild(node => node.name === METADATA.TASK_LIST_NAME);
+        if (tasksFrame) {
+            tasksFrame.remove();
+            notify(NOTIFICATIONS.TASKS_CLEARED);
+        }
     }
 });

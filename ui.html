@@ -104,12 +104,11 @@ h4 {
 
   /* Стили для input */
   input[type="number"] {
-    flex: 1;
-    padding: var(--spacing-s);
+    padding: var(--input-padding);
     border-radius: var(--border-radius);
     font-family: var(--font-family);
     font-size: var(--font-size);
-    border: 1px solid var(--not-relevant-color);
+    border: var(--input-border);
   }
 
   input[type="number"]:focus {
@@ -197,9 +196,24 @@ h4 {
   .task-input-container input,
   .check-it-container input,
   input[type="number"] {
-    @extend .input-common;
+    padding: var(--input-padding);
+    border-radius: var(--border-radius);
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    border: var(--input-border);
+}
+
+  /* Стили для ссылки очистки */
+  .clear-link {
+    margin-top: var(--spacing-s);
+    color: var(--not-relevant-color);
+    text-decoration: none;
+    font-size: 14px;
   }
 
+  .clear-link:hover {
+    text-decoration: underline;
+  }
 </style>
 <h4>Статусы</h4>
 <div class="status-management">
@@ -235,6 +249,9 @@ h4 {
   </div>
   <button id="rewrite" class="ghost-button">[...] -> ссылки</button>
 </div>
+
+<!-- Добавляем ссылку для очистки -->
+<a href="#" id="clearTasks" class="clear-link">Очистить</a>
 
 <script>
   const buttons = Array.from(document.querySelectorAll('.status-button'));
@@ -357,4 +374,14 @@ h4 {
       addTask();
     }
   });
+
+  // Добавляем обработчик для очистки
+  document.getElementById('clearTasks').onclick = (e) => {
+    e.preventDefault();
+    parent.postMessage({ 
+      pluginMessage: { 
+        type: 'clear-tasks'
+      } 
+    }, '*');
+  };
 </script>
