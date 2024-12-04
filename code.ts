@@ -21,7 +21,7 @@ const METADATA = {
   STATUS_LABEL_NAME: 'Status Label',
   STATUS_INDICATOR_NAME: 'Status Indicator',
   SPACING: 16,
-  DEFAULT_HEIGHT: 125,
+  DEFAULT_HEIGHT: 32,
   PADDING: {
     VERTICAL: 12,
     HORIZONTAL: 20
@@ -221,12 +221,12 @@ function updateMetadataFrame() {
     if (!metadataFrame) {
       metadataFrame = figma.createFrame();
       metadataFrame.name = METADATA.FRAME_NAME;
+      metadataFrame.resize(metadataFrame.width, METADATA.DEFAULT_HEIGHT);
       metadataFrame.layoutMode = "VERTICAL";
-      metadataFrame.layoutSizingVertical = 'FIXED';
+      metadataFrame.layoutSizingVertical = 'HUG';
       metadataFrame.layoutSizingHorizontal = 'HUG';
       metadataFrame.fills = [];
       metadataFrame.itemSpacing = METADATA.SPACING;
-      metadataFrame.resize(metadataFrame.width, METADATA.DEFAULT_HEIGHT);
       metadataFrame.primaryAxisAlignItems = 'MAX';
       metadataFrame.clipsContent = false;
       metadataFrame.locked = true;
